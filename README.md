@@ -1,4 +1,4 @@
-# 使用 minGPT 训练自己的小型 GPT 语言模型
+# Training a Small GPT Language Model with minGPT
 
 [![Python](https://img.shields.io/badge/Python-3.11+-blue.svg)](https://www.python.org/)
 [![PyTorch](https://img.shields.io/badge/PyTorch-2.0+-red.svg)](https://pytorch.org/)
@@ -6,57 +6,57 @@
 [![Jupyter](https://img.shields.io/badge/Jupyter-Notebook-orange.svg)](https://jupyter.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-## 项目简介
+## About
 
-本项目基于 [Andrej Karpathy](https://github.com/karpathy) 的 [minGPT](https://github.com/karpathy/minGPT)，旨在从零开始训练一个属于自己的字符级语言模型。通过本项目，您可以深入了解数据处理、模型搭建、训练和测试的完整流程。
+This project is built on [minGPT](https://github.com/karpathy/minGPT) by [Andrej Karpathy](https://github.com/karpathy). It trains a character-level language model from scratch, walking through data prep, model definition, training, and inference.
 
-项目使用《西游记》（xyj.txt）作为训练语料，训练一个能够生成中文古典文学风格文本的 GPT 模型。
+The training corpus is *Journey to the West* (`xyj.txt`). The resulting model generates text in the style of classical Chinese literature.
 
-## 项目结构
+## Project Structure
 
 ```
 .
-├── minGPT.ipynb    # 主程序：包含完整的模型定义、训练和推理代码
-└── xyj.txt         # 训练数据：《西游记》全文
+├── minGPT.ipynb    # main notebook: model definition, training, inference
+└── xyj.txt         # training data: full text of Journey to the West
 ```
 
-## 功能特性
+## Features
 
-- **字符级语言模型**：基于字符级别的自回归语言模型
-- **Transformer 架构**：实现了多头自注意力机制
-- **完整的训练流程**：包含数据预处理、模型训练、损失监控
-- **文本生成**：支持使用训练好的模型生成文本
+- Character-level autoregressive language model
+- Transformer architecture with multi-head self-attention
+- Full training loop: data preprocessing, training, loss monitoring
+- Text generation from a trained model
 
-## 环境依赖
+## Requirements
 
 - Python >= 3.11
 - PyTorch >= 2.0
 - NumPy >= 1.24
 - Jupyter Notebook
 
-## 快速开始
+## Quick Start
 
-1. 打开 Jupyter Notebook：
+1. Open the notebook:
 
    ```bash
    jupyter notebook minGPT.ipynb
    ```
 
-2. 按顺序运行 notebook 中的代码单元格即可
+2. Run the cells in order.
 
-## 模型架构
+## Model Architecture
 
-本项目实现了以下核心组件：
+The notebook implements:
 
-- **CausalSelfAttention**: 因果自注意力机制（带掩码）
-- **MLP**: 多层感知机（前馈网络）
-- **Block**: Transformer 块（注意力 + MLP + 残差连接 + LayerNorm）
-- **GPT**: 完整的 GPT 模型
+- **CausalSelfAttention** — masked causal self-attention
+- **MLP** — feed-forward network
+- **Block** — Transformer block (attention + MLP + residual + LayerNorm)
+- **GPT** — the full model
 
-### 超参数配置
+### Hyperparameters
 
 ```python
-@dataclass # 默认模型配置。
+@dataclass # default model config
 class Config:
     batch_size: int = 64;
     block_size: int = 128;
@@ -66,31 +66,31 @@ class Config:
     n_head: int = 2;
     dropout: float = 0.1;
     bias: bool = True;
-    grad_norm_clip: float = 1.0; # 梯度裁剪阈值。
+    grad_norm_clip: float = 1.0; # gradient clipping threshold
 config = Config();
 ```
 
-## 训练数据
+## Training Data
 
-本项目使用《西游记》作为训练语料（xyj.txt），包含约 74 万个中文字符。模型将学习中文古典文学的语法结构和表达方式。
+`xyj.txt` contains roughly 740,000 Chinese characters. The model learns the syntax and phrasing of classical Chinese.
 
-## 使用方法
+## Usage
 
-### 训练模型
+### Training
 
-运行 notebook 中的训练代码块，模型将自动：
+Run the training cells. They will:
 
-1. 加载并编码训练数据
-2. 初始化 GPT 模型
-3. 进行迭代训练
-4. 定期输出损失值
+1. Load and encode the training data
+2. Initialize the GPT model
+3. Run the training loop
+4. Print the loss periodically
 
-### 文本生成
+### Generating Text
 
-训练完成后，使用以下代码生成文本：
+After training:
 
 ```python
-# 加载保存的模型（如果需要）。
+# Load a saved checkpoint if needed
 # model.load_state_dict(torch.load(os.path.join(WORK_DIR, "model.pt")));
 model.eval();
 
@@ -110,12 +110,12 @@ def generate_text(prompt, max_tokens=5, temperature=0.8, top_k=10):
 prompt = "孙";
 
 generated = generate_text(prompt, max_tokens=100, temperature=0.8);
-print(f"生成结果: {generated}");
+print(f"generated: {generated}");
 ```
 
-## 许可证
+## License
 
-本项目基于 [minGPT](https://github.com/karpathy/minGPT) 开发，遵循 MIT 许可证：
+This project is based on [minGPT](https://github.com/karpathy/minGPT) and follows the MIT license:
 
 ```
 The MIT License (MIT) Copyright (c) 2020 Andrej Karpathy
@@ -139,15 +139,13 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
-## 作者信息
+## Author
 
-**谙弆悕博士（Ailan Anjuxi）**
+**Dr. Ailan Anjuxi (谙弆悕)**
 
-- 邮箱：[anjuxi.ME@outlook.com](mailto:anjuxi.ME@outlook.com)
-- SIP 电话：[sip:anjuxi@sip.linphone.org](sip:anjuxi@sip.linphone.org)
+- Email: [anjuxi.ME@outlook.com](mailto:anjuxi.ME@outlook.com)
+- SIP: [sip:anjuxi@sip.linphone.org](sip:anjuxi@sip.linphone.org)
 
-## 参考资料
+## References
 
 - [minGPT - Andrej Karpathy](https://github.com/karpathy/minGPT)
-
-  
