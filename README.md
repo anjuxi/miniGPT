@@ -1,4 +1,6 @@
-# Training a Small GPT Language Model with minGPT
+# miniGPT: A Character-Level Chinese Language Model
+
+[English](README.md) | [简体中文](README_CN.md)
 
 [![Python](https://img.shields.io/badge/Python-3.11+-blue.svg)](https://www.python.org/)
 [![PyTorch](https://img.shields.io/badge/PyTorch-2.0+-red.svg)](https://pytorch.org/)
@@ -6,54 +8,77 @@
 [![Jupyter](https://img.shields.io/badge/Jupyter-Notebook-orange.svg)](https://jupyter.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-## About
+## Introduction
 
-This project is built on [minGPT](https://github.com/karpathy/minGPT) by [Andrej Karpathy](https://github.com/karpathy). It trains a character-level language model from scratch, walking through data prep, model definition, training, and inference.
+This project is built on [minGPT](https://github.com/karpathy/minGPT) by Andrej Karpathy. Its goal is to train a character-level language model from scratch and to make the whole pipeline — data preparation, model definition, training, and inference — easy to follow in a single notebook.
 
-The training corpus is *Journey to the West* (`xyj.txt`). The resulting model generates text in the style of classical Chinese literature.
+The training corpus is *Journey to the West* (`xyj.txt`), roughly 740,000 Chinese characters. The trained model generates text in the style of classical Chinese literature.
+
+What the notebook implements:
+
+- Character-level tokenization with a bidirectional character/index mapping
+- A GPT model: token and position embeddings, multi-head causal self-attention, pre-LN Transformer blocks, GELU feed-forward network
+- A training loop with AdamW, weight-decay grouping, and gradient clipping
+- Loss visualization and text generation with temperature and top-k sampling
+
+```mermaid
+flowchart LR
+    A[xyj.txt<br/>Journey to the West] --> B[CharDataset<br/>character / index mapping]
+    B --> C[GPT model<br/>Transformer blocks]
+    C --> D[Trainer<br/>AdamW + gradient clipping]
+    D --> E[Loss curves]
+    D --> F[generate<br/>temperature + top-k sampling]
+    F --> G[Classical Chinese text]
+    D --> H[out/my_lm<br/>vocab and model config]
+```
+
+## Requirements
+
+- [![Python](https://img.shields.io/badge/Python-3.11+-blue.svg)](https://www.python.org/) Python 3.11 or newer
+- [![PyTorch](https://img.shields.io/badge/PyTorch-2.0+-red.svg)](https://pytorch.org/) PyTorch 2.0 or newer
+- [![NumPy](https://img.shields.io/badge/NumPy-1.24+-green.svg)](https://numpy.org/) NumPy 1.24 or newer
+- [![Matplotlib](https://img.shields.io/badge/Matplotlib-3.7+-11557c.svg)](https://matplotlib.org/) Matplotlib for loss curves and character frequency plots
+- [![Jupyter](https://img.shields.io/badge/Jupyter-Notebook-orange.svg)](https://jupyter.org/) Jupyter Notebook to run the cells
+
+A CUDA-capable GPU is recommended but not required; the notebook falls back to CPU automatically.
 
 ## Project Structure
 
 ```
 .
-├── minGPT.ipynb    # main notebook: model definition, training, inference
-└── xyj.txt         # training data: full text of Journey to the West
+├── minGPT.ipynb    # main notebook: data prep, model definition, training, inference
+├── xyj.txt         # training corpus: full text of Journey to the West
+├── LICENSE         # MIT license
+├── README.md       # English documentation (this file)
+└── README_CN.md    # 中文文档
 ```
 
-## Features
+Running the notebook also creates `./out/my_lm/`, which holds the saved vocabulary mappings and model configuration.
 
-- Character-level autoregressive language model
-- Transformer architecture with multi-head self-attention
-- Full training loop: data preprocessing, training, loss monitoring
-- Text generation from a trained model
+## Usage
 
-## Requirements
+Install the dependencies:
 
-- Python >= 3.11
-- PyTorch >= 2.0
-- NumPy >= 1.24
-- Jupyter Notebook
+```bash
+pip install torch numpy matplotlib jupyter
+```
 
-## Quick Start
+Open the notebook and run the cells in order:
 
-1. Open the notebook:
+```bash
+jupyter notebook minGPT.ipynb
+```
 
-   ```bash
-   jupyter notebook minGPT.ipynb
-   ```
+The notebook is organized into six parts:
 
-2. Run the cells in order.
+1. **Imports** — standard library, PyTorch, and matplotlib setup.
+2. **Constants** — random seed, hyperparameters, data path, and device selection.
+3. **Data processing** — `CharDataset` builds the vocabulary and yields `(x, y)` sequence pairs.
+4. **Model** — `NewGELU`, `CausalSelfAttention`, `Block`, and the full `GPT` model.
+5. **Training** — the `Trainer` loop prints the loss periodically and plots raw and smoothed loss curves.
+6. **Inference** — generate text from a prompt and save the vocabulary/configuration to `./out/my_lm/`.
 
-## Model Architecture
-
-The notebook implements:
-
-- **CausalSelfAttention** — masked causal self-attention
-- **MLP** — feed-forward network
-- **Block** — Transformer block (attention + MLP + residual + LayerNorm)
-- **GPT** — the full model
-
-### Hyperparameters
+Default hyperparameters:
 
 ```python
 @dataclass # default model config
@@ -70,82 +95,38 @@ class Config:
 config = Config();
 ```
 
-## Training Data
-
-`xyj.txt` contains roughly 740,000 Chinese characters. The model learns the syntax and phrasing of classical Chinese.
-
-## Usage
-
-### Training
-
-Run the training cells. They will:
-
-1. Load and encode the training data
-2. Initialize the GPT model
-3. Run the training loop
-4. Print the loss periodically
-
-### Generating Text
-
-After training:
+To generate text after training, use the helper defined in the inference cell:
 
 ```python
-# Load a saved checkpoint if needed
-# model.load_state_dict(torch.load(os.path.join(WORK_DIR, "model.pt")));
-model.eval();
-
-def generate_text(prompt, max_tokens=5, temperature=0.8, top_k=10):
-    context = torch.tensor(
-        [train_dataset.stoi.get(s, 0) for s in prompt],
-        dtype=torch.long
-    )[None, ...].to(device);
-
-    with torch.no_grad():
-        y = model.generate(context, max_tokens, temperature=temperature, do_sample=True, top_k=top_k)[0];
-
-    completion = ''.join([train_dataset.itos[int(i)] for i in y]);
-    return completion;
-
-
 prompt = "孙";
-
 generated = generate_text(prompt, max_tokens=100, temperature=0.8);
-print(f"generated: {generated}");
+print(f"生成结果: {generated}");
 ```
+
+If you trained on Kaggle, point `train_data` at the mounted dataset path, for example `/kaggle/input/datasets/ailananjuxi/xiyouji/xyj.txt`; locally, change it to the path of your own `xyj.txt`.
+
+## Contributing
+
+Issues and pull requests are welcome.
+
+1. Fork the repository and create a feature branch.
+2. Keep the notebook structure intact and follow the existing code style.
+3. Run the whole notebook top to bottom before submitting, and clear large cell outputs if they are not needed.
+4. Describe what you changed and why in the pull request.
+
+For bugs or feature ideas, open an issue with the notebook cell, the error message, and your environment (Python/PyTorch version, CPU or GPU).
+
+## Contact
+
+**谙弆悕博士（Ailan Anjuxi）**
+
+- 📫 Email: [anjuxi.ME@outlook.com](mailto:anjuxi.ME@outlook.com)
+- 📞 SIP: [sip:anjuxi@sip.linphone.org](sip:anjuxi@sip.linphone.org)
 
 ## License
 
-This project is based on [minGPT](https://github.com/karpathy/minGPT) and follows the MIT license:
-
-```
-The MIT License (MIT) Copyright (c) 2020 Andrej Karpathy
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-```
-
-## Author
-
-**Dr. Ailan Anjuxi (谙弆悕)**
-
-- Email: [anjuxi.ME@outlook.com](mailto:anjuxi.ME@outlook.com)
-- SIP: [sip:anjuxi@sip.linphone.org](sip:anjuxi@sip.linphone.org)
+This project is based on [minGPT](https://github.com/karpathy/minGPT) and is released under the MIT License. See [LICENSE](LICENSE) for the full text.
 
 ## References
 
-- [minGPT - Andrej Karpathy](https://github.com/karpathy/minGPT)
+- [minGPT — Andrej Karpathy](https://github.com/karpathy/minGPT)
